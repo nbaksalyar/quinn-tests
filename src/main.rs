@@ -32,7 +32,9 @@ struct Node {
 }
 
 fn main() {
-    let node_count = 15;
+    env_logger::init();
+
+    let node_count = 20;
 
     let mut runtime = unwrap!(Runtime::new());
 
@@ -145,11 +147,12 @@ fn read_from_peer(stream: quinn::NewStream, ctx: Rc<RefCell<NodeContext>>) {
         quinn::NewStream::Uni(uni) => uni,
     };
 
-    let task = quinn::read_to_end(stream, 1024 * 1024 * 500)
+    let task = quinn::read_to_end(stream, 1024 * 1024 * 5)
         .map_err(|e| panic!("read_to_end() failed: {}", e))
         .and_then(move |(_stream, data)| {
             assert!(hash_correct(&data));
             ctx.borrow_mut().received_msg += 1;
+            println!("Received: {}", ctx.borrow().received_msg);
 
             if ctx.borrow().received_msg == ctx.borrow().expected_connections {
                 println!("Done. All checks passed");
@@ -180,7 +183,7 @@ fn configure_connector(node: &NodeInfo) -> quinn::ClientConfig {
     unwrap!(peer_cfg_builder.add_certificate_authority(their_cert));
     let mut peer_cfg = peer_cfg_builder.build();
     let transport_config = unwrap!(Arc::get_mut(&mut peer_cfg.transport));
-    transport_config.idle_timeout = 30;
+    transport_config.idle_timeout = 0;
     transport_config.keep_alive_interval = 10;
 
     peer_cfg
@@ -198,8 +201,8 @@ fn configure_listener() -> (quinn::ServerConfig, Vec<u8>) {
     ));
     let mut our_cfg = our_cfg_builder.build();
     let transport_config = unwrap!(Arc::get_mut(&mut our_cfg.transport_config));
-    transport_config.idle_timeout = 30;
-    transport_config.keep_alive_interval = 10;
+    transport_config.idle_timeout = 0;
+    transport_config.keep_alive_interval = 1;
 
     (our_cfg, our_cert_der)
 }
