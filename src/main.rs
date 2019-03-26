@@ -3,20 +3,20 @@ extern crate unwrap;
 #[macro_use]
 extern crate log;
 
-use std::sync::Arc;
-use std::rc::Rc;
-use std::cell::RefCell;
-use tokio::prelude::{future, Future, Stream};
-use tokio::runtime::current_thread::{self, Runtime};
-use std::net::SocketAddr;
 use crc::crc32;
 use rand::{self, RngCore};
+use std::cell::RefCell;
+use std::net::SocketAddr;
+use std::rc::Rc;
+use std::sync::Arc;
+use tokio::prelude::{future, Future, Stream};
+use tokio::runtime::current_thread::{self, Runtime};
 
 /// Nodee info to connect to each other.
 #[derive(Debug, Clone, PartialEq)]
 struct NodeInfo {
     addr: SocketAddr,
-    cert: Vec<u8>
+    cert: Vec<u8>,
 }
 
 struct NodeContext {
@@ -36,7 +36,10 @@ fn main() {
 
     let mut runtime = unwrap!(Runtime::new());
 
-    let all_nodes: Vec<_> = (0..node_count).into_iter().map(|_| Node::new(&mut runtime, node_count - 1)).collect();
+    let all_nodes: Vec<_> = (0..node_count)
+        .into_iter()
+        .map(|_| Node::new(&mut runtime, node_count - 1))
+        .collect();
     let all_contacts = all_nodes.iter().map(|node| node.conn_info()).collect();
 
     for ref mut node in all_nodes {
@@ -72,9 +75,13 @@ impl Node {
                 );
 
                 let ctx = ctx.clone();
-                let task = new_conn.incoming
+                let task = new_conn
+                    .incoming
                     .map_err(move |e| {
-                        debug!( "Incoming-streams from peer {} closed due to: {:?}", peer_addr, e);
+                        debug!(
+                            "Incoming-streams from peer {} closed due to: {:?}",
+                            peer_addr, e
+                        );
                     })
                     .for_each(move |stream| {
                         read_from_peer(stream, ctx.clone());
@@ -184,9 +191,10 @@ fn configure_listener() -> (quinn::ServerConfig, Vec<u8>) {
 
     let our_cfg = Default::default();
     let mut our_cfg_builder = quinn::ServerConfigBuilder::new(our_cfg);
-    unwrap!(
-        our_cfg_builder.certificate(quinn::CertificateChain::from_certs(vec![our_cert]), our_priv_key)
-    );
+    unwrap!(our_cfg_builder.certificate(
+        quinn::CertificateChain::from_certs(vec![our_cert]),
+        our_priv_key
+    ));
     let mut our_cfg = our_cfg_builder.build();
     let transport_config = unwrap!(Arc::get_mut(&mut our_cfg.transport_config));
     transport_config.idle_timeout = 30;
@@ -197,7 +205,9 @@ fn configure_listener() -> (quinn::ServerConfig, Vec<u8>) {
 
 fn gen_cert() -> (Vec<u8>, quinn::PrivateKey) {
     let cert = rcgen::generate_simple_self_signed(vec!["Test".to_string()]);
-    let key = unwrap!(quinn::PrivateKey::from_der(&cert.serialize_private_key_der()));
+    let key = unwrap!(quinn::PrivateKey::from_der(
+        &cert.serialize_private_key_der()
+    ));
     (cert.serialize_der(), key)
 }
 
