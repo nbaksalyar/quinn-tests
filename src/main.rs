@@ -180,8 +180,8 @@ fn configure_connector(node: &NodeInfo) -> quinn::ClientConfig {
     unwrap!(peer_cfg_builder.add_certificate_authority(their_cert));
     let mut peer_cfg = peer_cfg_builder.build();
     let transport_config = unwrap!(Arc::get_mut(&mut peer_cfg.transport));
-    transport_config.idle_timeout = 10;
-    transport_config.keep_alive_interval = 30;
+    transport_config.idle_timeout = 30;
+    transport_config.keep_alive_interval = 10;
 
     peer_cfg
 }
