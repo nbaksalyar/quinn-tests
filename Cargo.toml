@@ -1,0 +1,16 @@
+[package]
+name = "quinn-tests"
+version = "0.1.0"
+authors = ["Povilas Balciunas <balciunas90@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+quinn = { git = "https://github.com/djc/quinn", rev = "cada5cc" }
+tokio = "0.1.18"
+rcgen = "0.2.0"
+crc = "1.8.1"
+log = "0.4.6"
+env_logger = "0.6.1"
+serde_json = "1.0.39"
+unwrap = "1.2.1"
+rand = "0.6.5"
