@@ -32,7 +32,7 @@ struct Node {
 }
 
 fn main() {
-    let node_count = 5;
+    let node_count = 15;
 
     let mut runtime = unwrap!(Runtime::new());
 
@@ -68,8 +68,8 @@ impl Node {
             .for_each(move |new_conn| {
                 let conn = new_conn.connection;
                 let peer_addr = conn.remote_address();
-                println!(
-                    "[server] incoming connection: id={} addr={}",
+                debug!(
+                    "[listener] incoming connection: id={} addr={}",
                     conn.remote_id(),
                     peer_addr
                 );
@@ -103,17 +103,18 @@ impl Node {
     }
 
     fn send_to_all(&mut self, nodes: &Vec<NodeInfo>, runtime: &mut Runtime) {
+        let data = random_data_with_hash(1024 * 1024);
+
         let self_info = self.conn_info();
         for node in nodes {
             if node != &self_info {
-                self.send_data_to(node, runtime);
+                self.send_data_to(node, data.clone(), runtime);
             }
         }
     }
 
-    fn send_data_to(&mut self, node: &NodeInfo, runtime: &mut Runtime) {
+    fn send_data_to(&mut self, node: &NodeInfo, data: Vec<u8>, runtime: &mut Runtime) {
         let client_cfg = configure_connector(&node);
-        let msg = random_data_with_hash(1024 * 1024);
 
         let task = unwrap!(self.endpoint.connect_with(&client_cfg, &node.addr, "Test"))
             .map_err(|e| panic!("Connection failed: {}", e))
@@ -124,7 +125,7 @@ impl Node {
                     conn.remote_id(),
                     conn.remote_address()
                 );
-                write_to_peer_connection(&conn, msg);
+                write_to_peer_connection(&conn, data);
                 Ok(())
             });
         runtime.spawn(task);
